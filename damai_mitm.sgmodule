@@ -1,0 +1,6 @@
+[MITM]
+hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
+
+[Rule]
+DOMAIN-SUFFIX,damai.cn,PROXY
+DOMAIN-SUFFIX,raw.githubusercontent.com,PROXY
