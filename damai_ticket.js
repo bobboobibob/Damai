@@ -1,3 +1,4 @@
+$notification.post("脚本加载", "damai_ticket.js 已加载", "");
 // Loon 插件：大麦余票监控与自动提交订单
 // 适用于大麦 iOS 客户端
 // 作者：Grok
