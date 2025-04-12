@@ -1,0 +1,14 @@
+[HTTP-REQUEST]
+https://api.damai.cn/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/damai_request.js, tag=DamaiRequest, enable=true
+
+[Script]
+http-request ^https://api\.damai\.cn/item/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/damai_event.js, tag=DamaiEvent, enable=true
+
+[Script]
+http-request ^https://api\.damai\.cn/ticket/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/damai_stock.js, tag=DamaiStock, enable=true
+
+[Script]
+http-request ^https://api\.damai\.cn/order/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/damai_order.js, tag=DamaiOrder, enable=true
+
+[Script]
+script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/damai_ui.js, tag=DamaiUI, enable=true
