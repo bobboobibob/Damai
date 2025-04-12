@@ -1,10 +1,8 @@
 (function() {
     'use strict';
 
-    // 调试通知
     $notification.post("抢票脚本", "damai_ticket_bonus.js 已加载", "");
 
-    // 配置项
     const CONFIG = {
         TICKET_URL: 'https://m.damai.cn/shows/item.html?itemId=902193434418',
         TARGET_DATE: '2025-05-03',
@@ -13,38 +11,32 @@
         CHECK_INTERVAL: 1000
     };
 
-    // 候选余票和订单 API
     const STOCK_API_CANDIDATES = [
-        'https://api.damai.cn/ticket/inventory.query',
-        'https://api.damai.cn/ticket/stock.query',
-        'https://api.damai.cn/inventory/get',
         'https://mtop.damai.cn/h5/mtop.damai.ticket.inventory.query/1.0/'
     ];
     const ORDER_API_CANDIDATES = [
-        'https://api.damai.cn/order/create',
-        'https://api.damai.cn/order/submit',
-        'https://mtop.damai.cn/h5/mtop.damai.order.create/1.0/',
-        'https://api.damai.cn/trade/order/create'
+        'https://mtop.damai.cn/h5/mtop.damai.order.create/1.0/'
     ];
 
-    // 保存 Cookie
+    // 读取动态策略
+    const policy = $persistentStore.read("damai_policy") || 'DIRECT';
+
     if ($request && $request.headers && $request.headers.Cookie) {
         $persistentStore.write($request.headers.Cookie, "damai_cookie");
         $notification.post("Cookie 获取", "已保存 Cookie", "");
     }
 
-    // 提取 itemId
     function getItemId(url) {
         const match = url.match(/itemId=(\d+)/);
         return match ? match[1] : null;
     }
 
-    // 获取演出信息
     function fetchEventInfo(itemId) {
         const apiUrl = `https://api.damai.cn/item/detail.getdetail.2.0?itemId=${itemId}`;
         return new Promise((resolve, reject) => {
             $httpClient.get({
                 url: apiUrl,
+                policy: policy,
                 headers: {
                     'User-Agent': 'Damai/10.2.0 (iPhone; iOS 16.0)',
                     'Content-Type': 'application/json',
@@ -86,7 +78,6 @@
         });
     }
 
-    // 自动检测余票 API
     async function detectStockApi(sessionId, priceId) {
         let stockApi = $persistentStore.read("damai_stock_api");
         if (stockApi) return stockApi;
@@ -98,6 +89,7 @@
                 const response = await new Promise((resolve, reject) => {
                     $httpClient.get({
                         url: testUrl,
+                        policy: policy,
                         headers: {
                             'User-Agent': 'Damai/10.2.0 (iPhone; iOS 16.0)',
                             'Content-Type': 'application/json',
@@ -125,12 +117,12 @@
         throw new Error("未找到有效的余票 API，请手动抓包确认");
     }
 
-    // 监测余票
     async function checkStock(sessionId, priceId, stockApi) {
         const stockUrl = `${stockApi}?sessionId=${sessionId}&priceId=${priceId}`;
         return new Promise((resolve, reject) => {
             $httpClient.get({
                 url: stockUrl,
+                policy: policy,
                 headers: {
                     'User-Agent': 'Damai/10.2.0 (iPhone; iOS 16.0)',
                     'Content-Type': 'application/json',
@@ -152,7 +144,6 @@
         });
     }
 
-    // 自动检测订单 API
     async function detectOrderApi(sessionId, priceId) {
         let orderApi = $persistentStore.read("damai_order_api");
         if (orderApi) return orderApi;
@@ -171,6 +162,7 @@
                 const response = await new Promise((resolve, reject) => {
                     $httpClient.post({
                         url: api,
+                        policy: policy,
                         headers: {
                             'User-Agent': 'Damai/10.2.0 (iPhone; iOS 16.0)',
                             'Content-Type': 'application/json',
@@ -199,7 +191,6 @@
         throw new Error("未找到有效的订单 API，请手动抓包确认");
     }
 
-    // 提交订单
     async function submitOrder(sessionId, priceId, orderApi) {
         const orderData = {
             itemId: sessionId,
@@ -211,6 +202,7 @@
         return new Promise((resolve, reject) => {
             $httpClient.post({
                 url: orderApi,
+                policy: policy,
                 headers: {
                     'User-Agent': 'Damai/10.2.0 (iPhone; iOS 16.0)',
                     'Content-Type': 'application/json',
@@ -236,7 +228,6 @@
         });
     }
 
-    // 主逻辑
     async function main() {
         const itemId = getItemId(CONFIG.TICKET_URL);
         if (!itemId) {
@@ -245,7 +236,6 @@
             return;
         }
 
-        // 获取演出信息
         let eventInfo;
         try {
             eventInfo = await fetchEventInfo(itemId);
@@ -259,7 +249,6 @@
         const sessionId = $persistentStore.read("damai_session_id");
         const priceId = $persistentStore.read("damai_price_id");
 
-        // 检测余票 API
         let stockApi;
         try {
             stockApi = await detectStockApi(sessionId, priceId);
@@ -269,7 +258,6 @@
             return;
         }
 
-        // 监控余票
         let retryCount = 0;
         while (retryCount < CONFIG.MAX_RETRIES) {
             try {
@@ -288,7 +276,6 @@
             await new Promise(resolve => setTimeout(resolve, CONFIG.CHECK_INTERVAL));
         }
 
-        // 提交订单
         if ($persistentStore.read("damai_has_stock") === "true") {
             let orderApi;
             try {
