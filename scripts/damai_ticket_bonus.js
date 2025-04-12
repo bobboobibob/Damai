@@ -39,6 +39,10 @@
     if (sessionOptions.length === 0 || Object.keys(priceOptions).length === 0) {
         const detailUrl = `https://mtop.damai.cn/h5/mtop.damai.item.detail.get/1.0/?itemId=${itemId}`;
         $notification.post("大麦抢票", "提示", `正在获取场次和票价，请求: ${detailUrl}`);
+
+        // 添加调试通知，确认请求开始
+        $notification.post("大麦抢票", "调试", "开始发送场次和票价请求...");
+
         $httpClient.get({
             url: detailUrl,
             headers: {
@@ -57,6 +61,9 @@
                 $done();
                 return;
             }
+
+            // 添加调试通知，确认响应接收
+            $notification.post("大麦抢票", "调试", "场次和票价请求成功，状态码: 200");
 
             try {
                 const jsonData = JSON.parse(data);
@@ -110,6 +117,8 @@
                         priceMessage += "请手动运行以下脚本保存票价选择（选择编号，例如 1）：\n";
                         priceMessage += `$persistentStore.write('${prices[0].priceName}', 'selectedPrice')`;
                         $notification.post("大麦抢票", "提示", priceMessage);
+                    } else {
+                        $notification.post("大麦抢票", "失败", `未找到票价，场次: ${firstSession.sessionName}`);
                     }
 
                     $done();
