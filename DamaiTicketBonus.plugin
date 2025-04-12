@@ -25,9 +25,9 @@ DOMAIN-SUFFIX,damai.cn,DIRECT
 [script]
 script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_policy.js, tag=DamaiPolicy, enable=true
 
-http-request ^https:\/\/(api|mtop)\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
+http-request ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
 
-http-response ^https:\/\/(api|mtop)\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
+http-response ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
 
 [mitm]
-hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
+hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, detail.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
