@@ -1,0 +1,32 @@
+#!name=DamaiTicketBonus
+#!desc=这是一个大麦抢票插件，支持配置抢票模式和参数。input 用于输入抢票目标，select 用于选择抢票模式，用户配置的值可在脚本中通过 $persistentStore.read 读取。
+#!author=Loon0x00
+#!homepage=https://github.com/bobboobibob/Damai
+#!icon=https://raw.githubusercontent.com/luestr/ProxyResource/main/Icon/App-Icon/Damai.png
+#!input=ticketTarget
+#!input=userId
+#!select=ticketMode,auto,manual,fast
+#!select=retryCount,3,5,10
+
+[General]
+bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, localhost, *.local
+skip-proxy = 127.0.0.1, localhost, *.local
+real-ip = 127.0.0.1, localhost
+dns-server = system, 8.8.8.8, 1.1.1.1
+
+[rule]
+DOMAIN-SUFFIX,damai.cn,DIRECT
+
+[rewrite]
+
+[host]
+
+[script]
+script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_policy.js, tag=DamaiPolicy, enable=true
+
+http-request ^https:\/\/api\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
+
+http-response ^https:\/\/api\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
+
+[mitm]
+hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
