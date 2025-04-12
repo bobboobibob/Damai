@@ -1,11 +1,6 @@
-[General]
-resource-url = https://raw.githubusercontent.com/bobboobibob/Damai/main/resources/damai_mitm.sgmodule
+[MITM]
+hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
 
-[Script]
-script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_policy.js, tag=DamaiPolicy, enable=true
-
-[Script]
-http-request ^https:\/\/api\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
-
-[Script]
-http-response ^https:\/\/api\.damai\.cn\/ script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
+[Rule]
+DOMAIN-SUFFIX,damai.cn,DIRECT
+DOMAIN-SUFFIX,raw.githubusercontent.com,SCRIPT,damai_policy.js
