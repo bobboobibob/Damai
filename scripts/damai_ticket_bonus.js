@@ -1,14 +1,14 @@
 (function() {
     'use strict';
 
-    // 读取用户配置
-    const ticketTarget = $persistentStore.read("ticketTarget") || "未设置抢票目标";
-    const userId = $persistentStore.read("userId") || "未设置用户ID";
-    const ticketMode = $persistentStore.read("ticketMode") || "auto";
-    const retryCount = parseInt($persistentStore.read("retryCount") || "3");
+    // 读取用户配置（使用中文键名）
+    const ticketTarget = $persistentStore.read("抢票目标") || "未设置抢票目标";
+    const userId = $persistentStore.read("用户ID") || "未设置用户ID";
+    const ticketMode = $persistentStore.read("抢票模式") || "自动";
+    const retryCount = parseInt($persistentStore.read("重试次数") || "3");
 
     // 通知用户脚本已加载
-    $notification.post("大麦抢票", "damai_ticket_bonus.js 已加载", `目标: ${ticketTarget}, 模式: ${ticketMode}, 重试: ${retryCount}`);
+    $notification.post("大麦抢票", "damai_ticket_bonus.js 已加载", `抢票目标: ${ticketTarget}, 抢票模式: ${ticketMode}, 重试次数: ${retryCount}`);
 
     // 全局变量，用于存储库存信息
     let stockInfo = null;
@@ -52,15 +52,15 @@
                 };
 
                 if (stockInfo.stock <= 0) {
-                    $notification.post("大麦抢票警告", "库存不足", `目标: ${ticketTarget}, 库存: ${stockInfo.stock}`);
+                    $notification.post("大麦抢票警告", "库存不足", `抢票目标: ${ticketTarget}, 库存: ${stockInfo.stock}`);
                     $done();
                     return;
                 }
 
-                $notification.post("大麦抢票", "库存查询成功", `目标: ${ticketTarget}, 库存: ${stockInfo.stock}, 价格: ${stockInfo.price}`);
+                $notification.post("大麦抢票", "库存查询成功", `抢票目标: ${ticketTarget}, 库存: ${stockInfo.stock}, 价格: ${stockInfo.price}`);
 
-                // 根据 ticketMode 处理
-                if (ticketMode === "manual") {
+                // 根据抢票模式处理
+                if (ticketMode === "手动") {
                     $notification.post("大麦抢票提示", "请手动提交订单", `库存充足: ${stockInfo.stock}`);
                     $done();
                     return;
@@ -215,7 +215,7 @@
                 try {
                     const jsonData = JSON.parse(data);
                     if (jsonData.ret && jsonData.ret[0].includes("SUCCESS")) {
-                        $notification.post("大麦抢票成功", "订单提交成功", `目标: ${ticketTarget}, 订单ID: ${orderId}`);
+                        $notification.post("大麦抢票成功", "订单提交成功", `抢票目标: ${ticketTarget}, 订单ID: ${orderId}`);
                     } else {
                         const errorMsg = jsonData.ret?.[0] || "未知错误";
                         $notification.post("大麦抢票错误", "订单提交失败", `错误: ${errorMsg}`);
