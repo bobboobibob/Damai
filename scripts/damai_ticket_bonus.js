@@ -1,6 +1,9 @@
 (function() {
     'use strict';
 
+    // 通知用户脚本已加载
+    $notification.post("大麦抢票", "damai_ticket_bonus.js 已加载", "脚本启动成功");
+
     // 读取用户配置
     const ticketUrl = $persistentStore.read("抢票链接") || "";
     const ticketMode = $persistentStore.read("抢票模式") || "自动";
@@ -24,8 +27,8 @@
         return;
     }
 
-    // 通知用户脚本已加载
-    $notification.post("大麦抢票", "damai_ticket_bonus.js 已加载", `票务ID: ${itemId}, 抢票模式: ${ticketMode}, 重试次数: ${retryCount}`);
+    // 通知用户配置信息
+    $notification.post("大麦抢票", "配置信息", `票务ID: ${itemId}, 抢票模式: ${ticketMode}, 重试次数: ${retryCount}`);
 
     // 全局变量
     let sessionOptions = null; // 存储场次选项
