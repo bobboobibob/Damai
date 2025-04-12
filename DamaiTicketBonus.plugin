@@ -1,12 +1,12 @@
 #!name=DamaiTicketBonus
-#!desc=这是一个大麦抢票插件，支持配置抢票模式和参数。input 用于输入抢票目标，select 用于选择抢票模式，用户配置的值可在脚本中通过 $persistentStore.read 读取。
-#!author=Loon0x00
+#!desc=这是一个大麦抢票插件，支持配置抢票模式和参数。输入框用于输入抢票目标和用户ID，选择框用于选择抢票模式和重试次数，用户配置的值可在脚本中通过 $persistentStore.read 读取。
+#!author=Boo
 #!homepage=https://github.com/bobboobibob/Damai
 #!icon=https://raw.githubusercontent.com/luestr/ProxyResource/main/Icon/App-Icon/Damai.png
-#!input=ticketTarget
-#!input=userId
-#!select=ticketMode,auto,manual,fast
-#!select=retryCount,3,5,10
+#!input=抢票目标
+#!input=用户ID
+#!select=抢票模式,自动,手动,快速
+#!select=重试次数,3,5,10
 
 [General]
 bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, localhost, *.local
