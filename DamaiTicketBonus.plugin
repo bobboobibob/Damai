@@ -1,6 +1,6 @@
 #!name=DamaiTicketBonus
 #!desc=这是一个大麦抢票插件，支持输入抢票链接、选择场次和票价后自动抢票。输入框用于输入抢票链接，选择框用于选择抢票模式和重试次数。脚本会通过通知展示场次和票价选项，用户需手动运行脚本保存选择（详见通知）。
-#!author=Boo
+#!author=Loon0x00
 #!homepage=https://github.com/bobboobibob/Damai
 #!icon=https://raw.githubusercontent.com/luestr/ProxyResource/main/Icon/App-Icon/Damai.png
 #!input=抢票链接
