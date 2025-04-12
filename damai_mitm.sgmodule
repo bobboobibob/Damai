@@ -3,4 +3,4 @@ hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, amdc.m.taobao.com, acs.m.tao
 
 [Rule]
 DOMAIN-SUFFIX,damai.cn,DIRECT
-DOMAIN-SUFFIX,raw.githubusercontent.com,Hong Kong 香港 02
+DOMAIN-SUFFIX,raw.githubusercontent.com,Hong Kong
