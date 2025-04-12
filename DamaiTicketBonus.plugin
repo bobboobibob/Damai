@@ -1,0 +1,8 @@
+[General]
+resource-url = https://raw.githubusercontent.com/bobboobibob/Damai/main/resources/damai_mitm.sgmodule
+
+[Script]
+http-request ^https:\/\/api\.damai\.cn\/item\/detail\.getdetail\.2\.0 script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
+
+[Script]
+http-response ^https:\/\/api\.damai\.cn\/item\/detail\.getdetail\.2\.0 script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
