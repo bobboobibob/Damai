@@ -1,5 +1,5 @@
 #!name=DamaiTicketBonus
-#!desc=这是一个大麦抢票插件，支持输入抢票链接、选择场次和票价后自动抢票。输入框用于输入抢票链接，选择框用于选择抢票模式和重试次数，用户配置的值可在脚本中通过 $persistentStore.read 读取。运行 damai_select.js 选择场次和票价。
+#!desc=这是一个大麦抢票插件，支持输入抢票链接、选择场次和票价后自动抢票。输入框用于输入抢票链接，选择框用于选择抢票模式和重试次数。脚本会通过通知展示场次和票价选项，用户需手动运行脚本保存选择（详见通知）。
 #!author=Boo
 #!homepage=https://github.com/bobboobibob/Damai
 #!icon=https://raw.githubusercontent.com/luestr/ProxyResource/main/Icon/App-Icon/Damai.png
@@ -26,8 +26,6 @@ script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scri
 http-request ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
 
 http-response ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
-
-script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_select.js, tag=DamaiSelect, enable=true
 
 [mitm]
 hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, detail.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
