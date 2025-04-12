@@ -35,6 +35,7 @@
     // 1. 获取场次和票价选项
     if (!sessionOptions || !priceOptions) {
         const detailUrl = `https://mtop.damai.cn/h5/mtop.damai.item.detail.get/1.0/?itemId=${itemId}`;
+        $notification.post("大麦抢票", "正在获取场次和票价", `请求: ${detailUrl}`);
         $httpClient.get({
             url: detailUrl,
             headers: {
@@ -160,7 +161,7 @@
     const body = request.body ? JSON.parse(request.body) : {};
 
     // 通知用户脚本正在工作
-    $notification.post("大麦抢票", "脚本正在工作", `正在监测票务ID: ${itemId}, 场次: ${selectedSession}, 票价: ${selectedPrice}`);
+    $notification.post("大麦抢票", "脚本正在工作", `正在监测票务ID: ${itemId}, 场次: ${selectedSession}, 票价: ${selectedPrice}, URL: ${url}`);
 
     // 提取登录信息（cookie 或 token）
     const cookie = headers["Cookie"] || "";
