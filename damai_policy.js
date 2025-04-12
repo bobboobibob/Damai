@@ -4,10 +4,13 @@
     $notification.post("策略检测", "damai_policy.js 已加载", "");
 
     const POLICY_CANDIDATES = [
-        'Proxy',
-        'selectProxy',
-        'GlobalProxy',
-        'AutoSelect',
+        'Hong Kong',
+        'Japan',
+        'United States',
+        'Singapore',
+        'South Korea',
+        'Taiwan',
+        'Macao',
         'DIRECT'
     ];
 
