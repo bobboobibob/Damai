@@ -1,10 +1,8 @@
-$notification.post("脚本加载", "damai_ticket.js 已加载", "");
-// Loon 插件：大麦余票监控与自动提交订单
-// 适用于大麦 iOS 客户端
-// 作者：Grok
-
 (function() {
     'use strict';
+
+    // 调试通知：确认脚本是否加载
+    $notification.post("脚本加载", "damai_ticket.js 已加载", "");
 
     // 配置项（用户需修改）
     const CONFIG = {
@@ -178,6 +176,8 @@ $notification.post("脚本加载", "damai_ticket.js 已加载", "");
 
     // 主逻辑
     async function main() {
+        sendNotification("主逻辑启动", "开始执行抢票逻辑", "");
+
         if (!CONFIG.TICKET_URL) {
             sendNotification('错误', '请配置抢票链接');
             return;
@@ -236,6 +236,6 @@ $notification.post("脚本加载", "damai_ticket.js 已加载", "");
         }
     }
 
-    // 启动脚本
+    // 直接执行主逻辑
     main();
 })();
