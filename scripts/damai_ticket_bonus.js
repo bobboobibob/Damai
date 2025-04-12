@@ -2,18 +2,18 @@
     'use strict';
 
     // 通知用户脚本已加载
-    $notification.post("大麦抢票", "damai_ticket_bonus.js 已加载", "脚本启动成功");
+    $notification.post("大麦抢票", "成功", "damai_ticket_bonus.js 已加载，脚本启动成功");
 
     // 读取用户配置
     const ticketUrl = $persistentStore.read("抢票链接") || "";
     const ticketMode = $persistentStore.read("抢票模式") || "自动";
     const retryCount = parseInt($persistentStore.read("重试次数") || "3");
-    let selectedSession = $persistentStore.read("选择场次") || "";
-    let selectedPrice = $persistentStore.read("选择价位") || "";
+    let selectedSession = $persistentStore.read("selectedSession") || "";
+    let selectedPrice = $persistentStore.read("selectedPrice") || "";
 
     // 验证抢票链接
     if (!ticketUrl) {
-        $notification.post("大麦抢票错误", "未设置抢票链接", "请在插件配置中输入抢票链接");
+        $notification.post("大麦抢票", "失败", "未设置抢票链接，请在插件配置中输入抢票链接");
         $done();
         return;
     }
@@ -22,23 +22,23 @@
     const itemIdMatch = ticketUrl.match(/id=(\d+)/);
     const itemId = itemIdMatch ? itemIdMatch[1] : null;
     if (!itemId) {
-        $notification.post("大麦抢票错误", "抢票链接无效", "无法提取票务ID，请检查链接格式");
+        $notification.post("大麦抢票", "失败", "抢票链接无效，无法提取票务ID，请检查链接格式");
         $done();
         return;
     }
 
     // 通知用户配置信息
-    $notification.post("大麦抢票", "配置信息", `票务ID: ${itemId}, 抢票模式: ${ticketMode}, 重试次数: ${retryCount}`);
+    $notification.post("大麦抢票", "提示", `票务ID: ${itemId}, 抢票模式: ${ticketMode}, 重试次数: ${retryCount}`);
 
     // 全局变量
-    let sessionOptions = null; // 存储场次选项
-    let priceOptions = null; // 存储票价选项
+    let sessionOptions = JSON.parse($persistentStore.read("sessionOptions") || "[]");
+    let priceOptions = JSON.parse($persistentStore.read("priceOptions") || "{}");
     let stockInfo = null; // 存储库存信息
 
     // 1. 获取场次和票价选项
-    if (!sessionOptions || !priceOptions) {
+    if (sessionOptions.length === 0 || Object.keys(priceOptions).length === 0) {
         const detailUrl = `https://mtop.damai.cn/h5/mtop.damai.item.detail.get/1.0/?itemId=${itemId}`;
-        $notification.post("大麦抢票", "正在获取场次和票价", `请求: ${detailUrl}`);
+        $notification.post("大麦抢票", "提示", `正在获取场次和票价，请求: ${detailUrl}`);
         $httpClient.get({
             url: detailUrl,
             headers: {
@@ -47,13 +47,13 @@
             }
         }, (error, response, data) => {
             if (error) {
-                $notification.post("大麦抢票错误", "获取场次信息失败", `错误: ${error}`);
+                $notification.post("大麦抢票", "失败", `获取场次信息失败，错误: ${error}`);
                 $done();
                 return;
             }
 
             if (response.status !== 200) {
-                $notification.post("大麦抢票错误", "获取场次信息失败", `状态码: ${response.status}`);
+                $notification.post("大麦抢票", "失败", `获取场次信息失败，状态码: ${response.status}`);
                 $done();
                 return;
             }
@@ -81,48 +81,44 @@
                     });
 
                     if (sessionOptions.length === 0) {
-                        $notification.post("大麦抢票错误", "未找到场次", "请检查票务ID或稍后重试");
+                        $notification.post("大麦抢票", "失败", "未找到场次，请检查票务ID或稍后重试");
                         $done();
                         return;
                     }
 
+                    // 存储场次和票价选项
+                    $persistentStore.write(JSON.stringify(sessionOptions), "sessionOptions");
+                    $persistentStore.write(JSON.stringify(priceOptions), "priceOptions");
+
                     // 展示场次选项
-                    let sessionMessage = "请选择场次：\n";
+                    let sessionMessage = "场次选项：\n";
                     sessionOptions.forEach((option, index) => {
                         sessionMessage += `${index + 1}. ${option.sessionName} (场次ID: ${option.sessionId})\n`;
                     });
-                    sessionMessage += "请在插件配置中选择场次（例如：场次 1）";
+                    sessionMessage += "请手动运行以下脚本保存场次选择（选择编号，例如 1）：\n";
+                    sessionMessage += `$persistentStore.write('${sessionOptions[0].sessionName}', 'selectedSession')`;
+                    $notification.post("大麦抢票", "提示", sessionMessage);
 
-                    $notification.post("大麦抢票", "场次选项", sessionMessage);
-
-                    // 展示票价选项（基于当前选择的场次）
-                    if (selectedSession) {
-                        const session = sessionOptions.find(opt => opt.sessionName === selectedSession);
-                        if (session) {
-                            const prices = priceOptions[session.sessionId] || [];
-                            if (prices.length === 0) {
-                                $notification.post("大麦抢票错误", "未找到票价", `场次: ${selectedSession}`);
-                                $done();
-                                return;
-                            }
-
-                            let priceMessage = `场次: ${selectedSession}\n请选择票价：\n`;
-                            prices.forEach((price, index) => {
-                                priceMessage += `${index + 1}. ${price.priceName} (skuId: ${price.skuId})\n`;
-                            });
-                            priceMessage += "请在插件配置中选择票价（例如：580元）";
-
-                            $notification.post("大麦抢票", "票价选项", priceMessage);
-                        }
+                    // 展示票价选项（基于第一个场次）
+                    const firstSession = sessionOptions[0];
+                    const prices = priceOptions[firstSession.sessionId] || [];
+                    if (prices.length > 0) {
+                        let priceMessage = `场次: ${firstSession.sessionName}\n票价选项：\n`;
+                        prices.forEach((price, index) => {
+                            priceMessage += `${index + 1}. ${price.priceName} (skuId: ${price.skuId})\n`;
+                        });
+                        priceMessage += "请手动运行以下脚本保存票价选择（选择编号，例如 1）：\n";
+                        priceMessage += `$persistentStore.write('${prices[0].priceName}', 'selectedPrice')`;
+                        $notification.post("大麦抢票", "提示", priceMessage);
                     }
 
                     $done();
                 } else {
-                    $notification.post("大麦抢票错误", "获取场次信息失败", `错误: ${jsonData.ret?.[0] || "未知错误"}`);
+                    $notification.post("大麦抢票", "失败", `获取场次信息失败，错误: ${jsonData.ret?.[0] || "未知错误"}`);
                     $done();
                 }
             } catch (e) {
-                $notification.post("大麦抢票错误", "解析场次数据失败", `错误: ${e}`);
+                $notification.post("大麦抢票", "失败", `解析场次数据失败，错误: ${e}`);
                 $done();
             }
         });
@@ -131,17 +127,26 @@
         return;
     }
 
-    // 2. 验证用户选择
-    if (!selectedSession) {
-        $notification.post("大麦抢票错误", "未选择场次", "请在插件配置中选择场次");
-        $done();
-        return;
-    }
+    // 2. 验证用户选择，若未选择则默认选择第一个场次和最低票价
+    if (!selectedSession || !selectedPrice) {
+        if (sessionOptions.length > 0) {
+            selectedSession = sessionOptions[0].sessionName;
+            $persistentStore.write(selectedSession, "selectedSession");
+            $notification.post("大麦抢票", "提示", `未选择场次，已默认选择第一个场次: ${selectedSession}`);
 
-    if (!selectedPrice) {
-        $notification.post("大麦抢票错误", "未选择票价", "请在插件配置中选择票价");
-        $done();
-        return;
+            const prices = priceOptions[sessionOptions[0].sessionId] || [];
+            if (prices.length > 0) {
+                // 按价格排序，选择最低票价
+                prices.sort((a, b) => a.price - b.price);
+                selectedPrice = prices[0].priceName;
+                $persistentStore.write(selectedPrice, "selectedPrice");
+                $notification.post("大麦抢票", "提示", `未选择票价，已默认选择最低票价: ${selectedPrice}`);
+            }
+        } else {
+            $notification.post("大麦抢票", "失败", "未找到场次数据，请先获取场次和票价");
+            $done();
+            return;
+        }
     }
 
     // 查找用户选择的场次和票价对应的 ID
@@ -149,7 +154,7 @@
     const selectedPriceObj = priceOptions[selectedSessionObj?.sessionId]?.find(price => price.priceName === selectedPrice);
 
     if (!selectedSessionObj || !selectedPriceObj) {
-        $notification.post("大麦抢票错误", "场次或票价选择无效", `场次: ${selectedSession}, 票价: ${selectedPrice}`);
+        $notification.post("大麦抢票", "失败", `场次或票价选择无效，场次: ${selectedSession}, 票价: ${selectedPrice}`);
         $done();
         return;
     }
@@ -164,21 +169,21 @@
     const body = request.body ? JSON.parse(request.body) : {};
 
     // 通知用户脚本正在工作
-    $notification.post("大麦抢票", "脚本正在工作", `正在监测票务ID: ${itemId}, 场次: ${selectedSession}, 票价: ${selectedPrice}, URL: ${url}`);
+    $notification.post("大麦抢票", "提示", `脚本正在工作，正在监测票务ID: ${itemId}, 场次: ${selectedSession}, 票价: ${selectedPrice}, URL: ${url}`);
 
     // 提取登录信息（cookie 或 token）
     const cookie = headers["Cookie"] || "";
     const token = headers["Authorization"] || "";
 
     if (!cookie && !token) {
-        $notification.post("大麦抢票错误", "未检测到登录信息", "请确保已在大麦客户端登录");
+        $notification.post("大麦抢票", "失败", "未检测到登录信息，请确保已在大麦客户端登录");
         $done();
         return;
     }
 
     // 4. 监测库存查询请求
     if (url.includes("stock") || url.includes("mtop.damai.item.detail.get")) {
-        $notification.post("大麦抢票", "检测到库存查询请求", `URL: ${url}`);
+        $notification.post("大麦抢票", "提示", `检测到库存查询请求，URL: ${url}`);
 
         $httpClient.get({
             url: url,
@@ -186,13 +191,13 @@
             body: request.body
         }, (error, response, data) => {
             if (error) {
-                $notification.post("大麦抢票错误", "库存查询失败", `错误: ${error}`);
+                $notification.post("大麦抢票", "失败", `库存查询失败，错误: ${error}`);
                 $done();
                 return;
             }
 
             if (response.status !== 200) {
-                $notification.post("大麦抢票错误", "库存查询失败", `状态码: ${response.status}`);
+                $notification.post("大麦抢票", "失败", `库存查询失败，状态码: ${response.status}`);
                 $done();
                 return;
             }
@@ -207,17 +212,17 @@
                 };
 
                 if (stockInfo.stock <= 0) {
-                    $notification.post("大麦抢票警告", "库存不足", `票务ID: ${itemId}, 场次: ${selectedSession}, 库存: ${stockInfo.stock}`);
+                    $notification.post("大麦抢票", "警告", `库存不足，票务ID: ${itemId}, 场次: ${selectedSession}, 库存: ${stockInfo.stock}`);
                     $done();
                     return;
                 }
 
-                $notification.post("大麦抢票", "库存查询成功", `票务ID: ${itemId}, 场次: ${selectedSession}, 库存: ${stockInfo.stock}, 价格: ${stockInfo.price / 100}元`);
+                $notification.post("大麦抢票", "成功", `库存查询成功，票务ID: ${itemId}, 场次: ${selectedSession}, 库存: ${stockInfo.stock}, 价格: ${stockInfo.price / 100}元`);
 
                 // 自动模式或快速模式：创建订单
                 createOrder();
             } catch (e) {
-                $notification.post("大麦抢票错误", "解析库存数据失败", `错误: ${e}`);
+                $notification.post("大麦抢票", "失败", `解析库存数据失败，错误: ${e}`);
                 $done();
             }
         });
@@ -227,13 +232,13 @@
     }
 
     // 5. 默认放行其他请求，并通知
-    $notification.post("大麦抢票", "处理其他请求", `URL: ${url}`);
+    $notification.post("大麦抢票", "提示", `处理其他请求，URL: ${url}`);
     $done();
 
     // 6. 创建订单函数
     function createOrder() {
         if (!stockInfo) {
-            $notification.post("大麦抢票错误", "无法创建订单", "未获取库存信息");
+            $notification.post("大麦抢票", "失败", "无法创建订单，未获取库存信息");
             return;
         }
 
@@ -258,23 +263,23 @@
                 body: JSON.stringify(orderData)
             }, (error, response, data) => {
                 if (error) {
-                    $notification.post("大麦抢票错误", "订单创建失败", `错误: ${error}`);
+                    $notification.post("大麦抢票", "失败", `订单创建失败，错误: ${error}`);
                     if (attempts < retryCount) {
-                        $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                        $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                         setTimeout(tryCreateOrder, 1000);
                     } else {
-                        $notification.post("大麦抢票失败", "订单创建失败", `已重试 ${retryCount} 次`);
+                        $notification.post("大麦抢票", "失败", `订单创建失败，已重试 ${retryCount} 次`);
                     }
                     return;
                 }
 
                 if (response.status !== 200) {
-                    $notification.post("大麦抢票错误", "订单创建失败", `状态码: ${response.status}`);
+                    $notification.post("大麦抢票", "失败", `订单创建失败，状态码: ${response.status}`);
                     if (attempts < retryCount) {
-                        $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                        $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                         setTimeout(tryCreateOrder, 1000);
                     } else {
-                        $notification.post("大麦抢票失败", "订单创建失败", `已重试 ${retryCount} 次`);
+                        $notification.post("大麦抢票", "失败", `订单创建失败，已重试 ${retryCount} 次`);
                     }
                     return;
                 }
@@ -283,20 +288,20 @@
                     const jsonData = JSON.parse(data);
                     if (jsonData.ret && jsonData.ret[0].includes("SUCCESS")) {
                         const orderId = jsonData.data?.orderId || "未知";
-                        $notification.post("大麦抢票", "订单创建成功", `订单ID: ${orderId}`);
+                        $notification.post("大麦抢票", "成功", `订单创建成功，订单ID: ${orderId}`);
                         submitOrder(orderId);
                     } else {
                         const errorMsg = jsonData.ret?.[0] || "未知错误";
-                        $notification.post("大麦抢票错误", "订单创建失败", `错误: ${errorMsg}`);
+                        $notification.post("大麦抢票", "失败", `订单创建失败，错误: ${errorMsg}`);
                         if (attempts < retryCount) {
-                            $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                            $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                             setTimeout(tryCreateOrder, 1000);
                         } else {
-                            $notification.post("大麦抢票失败", "订单创建失败", `已重试 ${retryCount} 次`);
+                            $notification.post("大麦抢票", "失败", `订单创建失败，已重试 ${retryCount} 次`);
                         }
                     }
                 } catch (e) {
-                    $notification.post("大麦抢票错误", "解析订单创建数据失败", `错误: ${e}`);
+                    $notification.post("大麦抢票", "失败", `解析订单创建数据失败，错误: ${e}`);
                 }
             });
         }
@@ -324,23 +329,23 @@
                 body: JSON.stringify(submitData)
             }, (error, response, data) => {
                 if (error) {
-                    $notification.post("大麦抢票错误", "订单提交失败", `错误: ${error}`);
+                    $notification.post("大麦抢票", "失败", `订单提交失败，错误: ${error}`);
                     if (attempts < retryCount) {
-                        $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                        $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                         setTimeout(trySubmitOrder, 1000);
                     } else {
-                        $notification.post("大麦抢票失败", "订单提交失败", `已重试 ${retryCount} 次`);
+                        $notification.post("大麦抢票", "失败", `订单提交失败，已重试 ${retryCount} 次`);
                     }
                     return;
                 }
 
                 if (response.status !== 200) {
-                    $notification.post("大麦抢票错误", "订单提交失败", `状态码: ${response.status}`);
+                    $notification.post("大麦抢票", "失败", `订单提交失败，状态码: ${response.status}`);
                     if (attempts < retryCount) {
-                        $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                        $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                         setTimeout(trySubmitOrder, 1000);
                     } else {
-                        $notification.post("大麦抢票失败", "订单提交失败", `已重试 ${retryCount} 次`);
+                        $notification.post("大麦抢票", "失败", `订单提交失败，已重试 ${retryCount} 次`);
                     }
                     return;
                 }
@@ -348,19 +353,19 @@
                 try {
                     const jsonData = JSON.parse(data);
                     if (jsonData.ret && jsonData.ret[0].includes("SUCCESS")) {
-                        $notification.post("大麦抢票成功", "订单提交成功", `票务ID: ${itemId}, 场次: ${selectedSession}, 订单ID: ${orderId}`);
+                        $notification.post("大麦抢票", "成功", `订单提交成功，票务ID: ${itemId}, 场次: ${selectedSession}, 订单ID: ${orderId}`);
                     } else {
                         const errorMsg = jsonData.ret?.[0] || "未知错误";
-                        $notification.post("大麦抢票错误", "订单提交失败", `错误: ${errorMsg}`);
+                        $notification.post("大麦抢票", "失败", `订单提交失败，错误: ${errorMsg}`);
                         if (attempts < retryCount) {
-                            $notification.post("大麦抢票", "正在重试", `第 ${attempts + 1} 次尝试`);
+                            $notification.post("大麦抢票", "提示", `正在重试，第 ${attempts + 1} 次尝试`);
                             setTimeout(trySubmitOrder, 1000);
                         } else {
-                            $notification.post("大麦抢票失败", "订单提交失败", `已重试 ${retryCount} 次`);
+                            $notification.post("大麦抢票", "失败", `订单提交失败，已重试 ${retryCount} 次`);
                         }
                     }
                 } catch (e) {
-                    $notification.post("大麦抢票错误", "解析订单提交数据失败", `错误: ${e}`);
+                    $notification.post("大麦抢票", "失败", `解析订单提交数据失败，错误: ${e}`);
                 }
             });
         }
