@@ -1,11 +1,8 @@
 #!name=DamaiTicketBonus
-#!desc=这是一个大麦抢票插件，支持输入抢票链接、选择场次和票价后自动抢票。输入框用于输入抢票链接，选择框用于选择抢票模式和重试次数。脚本会通过通知展示场次和票价选项，用户需手动运行脚本保存选择（详见通知）。
-#!author=Loon0x00
+#!desc=这是一个大麦票务检测插件，自动检测大麦 iOS 客户端中用户当前停留的演出是否有票，并在有票时使抢票按钮变为可点击状态。用户需手动点击抢票按钮完成购票。需确保已在大麦客户端登录并进入票务详情页面。
+#!author=Boo
 #!homepage=https://github.com/bobboobibob/Damai
 #!icon=https://raw.githubusercontent.com/luestr/ProxyResource/main/Icon/App-Icon/Damai.png
-#!input=抢票链接
-#!select=抢票模式,自动,快速
-#!select=重试次数,3,5,10
 
 [General]
 bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, localhost, *.local
@@ -21,11 +18,11 @@ DOMAIN-SUFFIX,damai.cn,DIRECT
 [host]
 
 [script]
-script script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_policy.js, tag=DamaiPolicy, enable=true
+# 拦截请求以获取 itemId 和库存信息
+http-request ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
 
-http-request ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ticket_bonus.js, requires-body=true, timeout=60, tag=DamaiTicketBonus, enable=true
-
-http-response ^https:\/\/(api|mtop|detail)\.damai\.cn\/.*(stock|detail|order|submit) script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
+# 修改页面 DOM，使抢票按钮可点击
+http-response ^https:\/\/detail\.damai\.cn\/item\.htm script-path=https://raw.githubusercontent.com/bobboobibob/Damai/main/scripts/damai_ui.js, requires-body=true, timeout=60, tag=DamaiUI, enable=true
 
 [mitm]
 hostname = *.damai.cn, api.damai.cn, mtop.damai.cn, detail.damai.cn, amdc.m.taobao.com, acs.m.taobao.com
